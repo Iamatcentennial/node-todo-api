@@ -1,12 +1,15 @@
 const expect = require('expect');
 const request = require('supertest');
+const { ObjectID } = require('mongodb');
 
 const { app } = require('./../server/server');
 const { Todo } = require('./../server/models/todo');
 
 var todos = [{
+    _id : new ObjectID(),
     text: 'First test to do'
 },{
+    _id : new ObjectID(),
     text: 'Second test to do'
 }];
 
@@ -79,7 +82,37 @@ describe('GET /todos',()=>{
                 expect(res.body.todos.length).toBe(2);
             })
             .end(done);
-
-
      });
+});
+
+describe('GET /todos/:id', (done)=>{
+
+    it('Id is valid and a todo is returned',(done)=>{
+        request(app)
+            .get(`/todos/${todos[0]._id.toHexString()}`)
+            .expect(200)
+            .expect((res)=>{
+                expect(res.body.text).toBe(todos[0].text)
+            })
+            .end(done);
+    });
+
+    it('Invalid id',(done)=>{
+        //var id = 123;
+        request(app)
+            .get('/todos/123')
+            .expect(404)
+            .end(done);
+    });
+
+    it('Id is valid but no such todo exist in database',(done)=>{
+       var hexId = new ObjectID().toHexString();
+       
+        request(app)
+            .get(`/todos/${hexId}`)
+            //.get(`/todos/ 5b5fea5fab4b4512ac74593b`)
+            .expect(404)
+            .end(done);
+    });
+
 });
