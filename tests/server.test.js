@@ -2,7 +2,6 @@ const expect = require('expect');
 const request = require('supertest');
 const { ObjectID } = require('mongodb');
 
-
 const { app } = require('./../server/server');
 const { Todo } = require('./../server/models/todo');
 
@@ -11,7 +10,9 @@ var todos = [{
     text: 'First test to do'
 },{
     _id : new ObjectID(),
-    text: 'Second test to do'
+    text: 'Second test to do',
+    completed: true,
+    completeAt : 333
 }];
 
 beforeEach((done)=>{
@@ -74,7 +75,6 @@ describe('POST /todos',()=>{
     });
 });
 
-
 describe('GET /todos',()=>{
      it('Should be able to fetch all the todos',(done)=>{
         
@@ -88,7 +88,7 @@ describe('GET /todos',()=>{
      });
 });
 
-describe('GET /todos/:id', (done)=>{
+describe('GET /todos/:id', ()=>{
 
     it('Id is valid and a todo is returned',(done)=>{
         request(app)
@@ -153,5 +153,43 @@ describe('DELETE /todos/:id',()=>{
         .expect(404)
         .end(done);
 
+    });
+});
+
+describe('Patch /todos/:id',()=>{
+    it('Should update the record with a valid id',(done)=>{
+        var hexId= todos[0]._id.toHexString();
+        request(app)
+            .patch(`/todos/${hexId}`)
+            .send({
+                text:'testing for patch update',
+                completed:true})
+            .expect(200)
+            .expect((res)=>{
+                expect(res.body.todo.text).toBe('testing for patch update');
+                expect(res.body.todo.completed).toBe(true);
+                //expect(res.body.todo.completeAt).toBeA('Number');
+            })
+            .end((err,res)=>{
+                if(err){
+                    return done(err);
+                }
+                done();
+            });
+    });
+    it('Should return 404 if id is not valid',(done)=>{
+        var hexId= todos[1]._id.toHexString();
+        request(app)
+            .patch(`/todos/${hexId}`)
+            .send({
+                text:'patch update',
+                completed:false})
+            .expect(200)
+            .expect((res)=>{
+                expect(res.body.todo.text).toBe('patch update');
+                expect(res.body.todo.completed).toBe(false);
+                //expect(res.body.todo.completeAt).toBeA('Number');
+            })
+            .end(done)
     });
 });

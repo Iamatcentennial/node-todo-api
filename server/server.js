@@ -4,14 +4,11 @@ const bodyparser = require('body-parser');
 const {ObjectID} = require('mongodb');
 const _ = require('lodash');
 
-
 //Local imports
 var {mongoose} = require('./db/mongoose');
 var {Todo} = require('./models/todo');
 var {User} = require('./models/user');
 const port = process.env.PORT || 3000;
-
-
 
 var app = express();
 //Middleware that takes funtions as arguments
@@ -100,11 +97,12 @@ app.patch('/todos/:id',(req,res)=>{
     }
     
     if(_.isBoolean(body.completed) && body.completed ){
-        body.completedAt = new Date().getTime();
+        body.completeAt = new Date().getTime();
+
     }
     else{
         body.completed=false;
-        body.completedAt = null;
+        body.completeAt = null;
     }
 
     Todo.findByIdAndUpdate(id,{$set:body}, {new: true})
