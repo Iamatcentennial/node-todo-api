@@ -25,6 +25,7 @@ beforeEach((done)=>{
 });
 
 describe('POST /todos',()=>{
+
     it('should create a new todo',(done)=>{
         var text = 'This is todos testing';
         
@@ -50,27 +51,28 @@ describe('POST /todos',()=>{
             
         });  
     });
+
+    it('should not create todo with invalid body',(done)=>{
+
+        request(app)
+        .post('/todos')
+        .send({})
+        .expect(400)
+        .end((err, res)=>{
+            if(err){
+                return done(err);
+            }
+    
+            Todo.find().then((todos)=>{
+                expect(todos.length).toBe(2);
+                done();
+            }).catch((e)=>{
+                done(e);
+            });
+        });    
+    });
 });
 
-it('should not create todo with invalid body',(done)=>{
-
-    request(app)
-    .post('/todos')
-    .send({})
-    .expect(400)
-    .end((err, res)=>{
-        if(err){
-            return done(err);
-        }
-
-        Todo.find().then((todos)=>{
-            expect(todos.length).toBe(2);
-            done();
-        }).catch((e)=>{
-            
-        });
-    });    
-});
 
 describe('GET /todos',()=>{
      it('Should be able to fetch all the todos',(done)=>{
@@ -115,4 +117,40 @@ describe('GET /todos/:id', (done)=>{
             .end(done);
     });
 
+});
+
+describe('DELETE /todos/:id',()=>{
+    it('Should remove a todo',(done)=>{
+        var hexId = todos[1]._id.toHexString();
+        request(app)
+            .delete(`/todos/${hexId}`)
+            .expect(200)
+            .expect((res)=>{
+                expect(res.body.todo.text).toBe(todos[1].text);
+            })
+            .end((err,res)=>{
+                if(err){
+                    return done(err);
+                }
+                Todo.findById(hexId).then((todo)=>{
+                    expect(todo).toBe(null);
+                    done();
+                }).catch((e)=> done(e));   
+
+            });
+            
+    });
+    it('Return 404 if valid id not exist',(done)=>{
+        request(app)
+            .delete('/todos/123')
+            .expect(404)
+            .end(done);
+    });
+    it('Return 404 if id is valid but no such record exists',(done)=>{
+        request(app)
+        .delete('/todos/5b612974c02dc93e7fc4eb21')
+        .expect(404)
+        .end(done);
+
+    });
 });

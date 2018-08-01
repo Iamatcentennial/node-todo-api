@@ -82,7 +82,7 @@ app.delete('/todos/:id',(req, res)=>{
         if(!todo)
         return res.status(404).send();
         //Id is valid and record is deleted
-        res.status(200).send(todo);
+        res.status(200).send({todo});
     }).catch((e)=>{
         res.status(400).send();
     });
