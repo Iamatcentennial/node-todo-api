@@ -1,0 +1,7 @@
+How to generate the tokens:
+I will sign up or log in with email and password.
+I will make a post request, sending my data
+Data is going to be stored in database, authenticate and repond with a token
+
+Create a user model with email, password and token properties.
+create a method which when call with a user instance, generate the token and send it back
