@@ -4,27 +4,10 @@ const { ObjectID } = require('mongodb');
 
 const { app } = require('./../server/server');
 const { Todo } = require('./../server/models/todo');
+const {populateTodos,todos,users,populateUsers} = require('./seed/seed')
 
-var todos = [{
-    _id : new ObjectID(),
-    text: 'First test to do'
-},{
-    _id : new ObjectID(),
-    text: 'Second test to do',
-    completed: true,
-    completeAt : 333
-}];
-
-beforeEach((done)=>{
-    Todo.remove({})
-    .then(()=>{
-        return Todo.insertMany(todos)
-        .then(()=>{
-            done();
-        });
-    });
-    
-});
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 
 describe('POST /todos',()=>{
 
@@ -192,4 +175,70 @@ describe('Patch /todos/:id',()=>{
             })
             .end(done)
     });
+});
+
+describe('GET /users/me',()=>{
+    it('should return user if authenticated',(done)=>{
+        
+        request(app)
+        .get('/users/me')
+        .set('x-auth', users[0].tokens[0].token)
+        .expect(200)
+        .expect((res)=>{
+           expect(res.body._id).toBe(users[0]._id.toHexString());
+           expect(res.body.email).toBe(users[0].email); 
+        })
+        .end(done);
+    });
+
+    it('should return 401 if not authenticated',(done)=>{
+        request(app)
+        .get('/users/me')
+        .set('x-auth', 'sgsdgsdgsdgsdgfsdg')
+        .expect(401)
+        .expect((res)=>{
+            expect(res.body).toEqual({});
+        })
+        .end(done);
+    });
+});
+
+describe('POST /users',()=>{
+    it('should create a user',(done)=>{
+         var email = 'abhi@xyz.com';
+         var password = 'jsdlj2344';
+         request(app)
+         .post('/users')
+         .send({email,password})
+         .expect(200)
+         .expect((res)=>{
+             
+           expect(res.headers['x-auth']).toBeDefined();
+             expect(res.body.email).toBe(email);
+             expect(res.body._id).toBeTruthy();
+         })
+         .end(done);
+    });
+
+    it('should return validation error if request invalid',(done)=>{
+       var email = 'ashi';
+       var password = '123'
+        request(app)
+        .post('/users')
+        .send({email,password})
+        .expect(404)
+        .end(done);
+
+    });
+
+    it('it should not create user if email in use',(done)=>{
+        var email = 'ashu.raist@abc.com';
+         var password = 'jsdlj2344';
+         request(app)
+         .post('/users')
+         .send({email,password})
+         .expect(404)
+         .end(done);
+    });
+
 });
